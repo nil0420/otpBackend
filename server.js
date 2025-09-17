@@ -2,13 +2,14 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const otpGenerator = require('otp-generator');
+const cors = require('cors'); // ✅ ADD THIS LINE
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware to parse JSON bodies
 app.use(express.json());
+app.use(cors()); // ✅ ADD THIS LINE TO ENABLE CORS
 
 // Temporary in-memory storage (use DB in production)
 const otpStore = {};
