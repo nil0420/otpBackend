@@ -2,19 +2,16 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const otpGenerator = require('otp-generator');
-const cors = require('cors'); // ✅ ADD THIS LINE
+const cors = require('cors'); 
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
-app.use(cors()); // ✅ ADD THIS LINE TO ENABLE CORS
-
-// Temporary in-memory storage (use DB in production)
+app.use(cors()); // 
 const otpStore = {};
 
-// Create a Nodemailer transporter using Gmail + App Password
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -23,7 +20,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// ✅ Send OTP
 app.post('/api/send-otp', (req, res) => {
     const { email } = req.body;
 
@@ -31,19 +27,17 @@ app.post('/api/send-otp', (req, res) => {
         return res.status(400).json({ success: false, message: 'Email is required.' });
     }
 
-    // 1. Generate a 6-digit OTP
     const otp = otpGenerator.generate(6, {
         digits: true,
         alphabets: false,
         upperCase: false,
         specialChars: false,
     });
-
-    // 2. Store OTP with 5-min expiry
+    console.log("this is my OTP", otp)
     const expiryTime = Date.now() + 5 * 60 * 1000;
     otpStore[email] = { otp, expiryTime };
 
-    // 3. Email content
+   
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
@@ -54,11 +48,11 @@ app.post('/api/send-otp', (req, res) => {
             <p>This OTP is valid for <b>5 minutes</b>. Do not share it with anyone.</p>
         `,
     };
-
-    // 4. Send email
+   console.log(mailOptions, "mailoptions")
+   
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.error('❌ Error sending email:', error);
+            console.error(' Error sending email:', error.stack);
             return res.status(500).json({ success: false, message: 'Failed to send OTP.' });
         }
         console.log('✅ OTP sent:', info.response);
@@ -66,7 +60,6 @@ app.post('/api/send-otp', (req, res) => {
     });
 });
 
-// ✅ Verify OTP
 app.post('/api/verify-otp', (req, res) => {
     const { email, otp } = req.body;
 
@@ -93,7 +86,6 @@ app.post('/api/verify-otp', (req, res) => {
     }
 });
 
-// Start server
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
