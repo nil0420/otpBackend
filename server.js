@@ -8,8 +8,26 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Dynamic CORS configuration based on the environment
+let corsOptions;
+if (process.env.NODE_ENV === 'production') {
+    corsOptions = {
+        origin: 'https://otpfrontend-production.up.railway.app', // Production frontend URL
+        optionsSuccessStatus: 200,
+        credentials: true
+    };
+} else {
+    // Development environment
+    corsOptions = {
+        origin: 'http://localhost:5174', // Your local frontend URL
+        optionsSuccessStatus: 200,
+        credentials: true
+    };
+}
+
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use(cors()); // 
+
 const otpStore = {};
 
 const transporter = nodemailer.createTransport({
@@ -37,7 +55,6 @@ app.post('/api/send-otp', (req, res) => {
     const expiryTime = Date.now() + 5 * 60 * 1000;
     otpStore[email] = { otp, expiryTime };
 
-   
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
@@ -48,8 +65,8 @@ app.post('/api/send-otp', (req, res) => {
             <p>This OTP is valid for <b>5 minutes</b>. Do not share it with anyone.</p>
         `,
     };
-   console.log(mailOptions, "mailoptions")
-   
+    console.log(mailOptions, "mailoptions")
+
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
             console.error(' Error sending email:', error.stack);
